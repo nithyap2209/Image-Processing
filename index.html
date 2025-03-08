@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Processor</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        .upload-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .upload-container {
+            width: 48%;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .upload-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            cursor: pointer;
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .upload-button:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+        .upload-button i {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        .upload-text {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .file-input {
+            display: none;
+        }
+        .options-container {
+            display: none;
+            margin-top: 20px;
+            text-align: left;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .option-group {
+            margin-bottom: 15px;
+        }
+        .button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        .button:hover {
+            background-color: #27ae60;
+        }
+        .button.no {
+            background-color: #e74c3c;
+        }
+        .button.no:hover {
+            background-color: #c0392b;
+        }
+        .color-options {
+            display: none;
+            margin-top: 10px;
+        }
+        .color-picker {
+            margin-top: 10px;
+        }
+        .format-options {
+            display: none;
+            margin-top: 10px;
+        }
+        .format-select {
+            padding: 8px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .preview-container {
+            margin-top: 20px;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .status-message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .processing-container {
+            display: none;
+            text-align: center;
+            margin-top: 30px;
+        }
+        .download-button {
+            background-color: #9b59b6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+            display: inline-block;
+        }
+        .download-button:hover {
+            background-color: #8e44ad;
+        }
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Image Processor</h1>
+            <p>Upload an image or a zip file to process</p>
+        </header>
+        
+        <div class="upload-section">
+            <!-- Single Image Upload Button -->
+            <div class="upload-container">
+                <h2>Upload Single Image</h2>
+                <label for="single-image-input" class="upload-button">
+                    <i class="fas fa-image"></i>
+                    <span class="upload-text">Select Image</span>
+                </label>
+                <input type="file" id="single-image-input" class="file-input" accept="image/*">
+                
+                <div class="preview-container" id="single-image-preview-container">
+                    <img src="https://via.placeholder.com/400x300" alt="Preview" class="preview-image" id="single-image-preview">
+                </div>
+                
+                <div class="status-message" id="single-image-status"></div>
+                <div class="loading-spinner" id="single-image-loader"></div>
+                
+                <div class="options-container" id="single-image-options">
+                    <div class="option-group" id="background-option">
+                        <h3>Do you need to change the background?</h3>
+                        <button class="button yes" data-action="change-background">Yes</button>
+                        <button class="button no" data-action="skip-background">No</button>
+                        
+                        <div class="color-options" id="background-options">
+                            <h3>Choose background option:</h3>
+                            <button class="button" data-background="transparent">Transparent</button>
+                            <button class="button" data-background="color">Color Palette</button>
+                            
+                            <div class="color-picker" id="color-picker-container">
+                                <label for="color-picker">Select Color:</label>
+                                <input type="color" id="color-picker" value="#ffffff">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="option-group" id="format-option">
+                        <h3>Do you need to change the format of the image?</h3>
+                        <button class="button yes" data-action="change-format">Yes</button>
+                        <button class="button no" data-action="skip-format">No</button>
+                        
+                        <div class="format-options" id="format-options">
+                            <h3>Choose format:</h3>
+                            <select class="format-select" id="format-select">
+                                <option value="png">PNG</option>
+                                <option value="jpg">JPG</option>
+                                <option value="jpeg">JPEG</option>
+                                <option value="webp">WEBP</option>
+                                <option value="gif">GIF</option>
+                                <option value="bmp">BMP</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="option-group" id="compress-option">
+                        <h3>Do you need to compress the image?</h3>
+                        <button class="button yes" data-action="compress-image">Yes</button>
+                        <button class="button no" data-action="skip-compress">No</button>
+                    </div>
+                </div>
+                
+                <div class="processing-container" id="single-processing-container">
+                    <h3>Processing Complete</h3>
+                    <p>Your image has been processed according to your specifications.</p>
+                    <a href="#" class="download-button" id="single-download-button">Download Processed Image</a>
+                </div>
+            </div>
+            
+            <!-- Zip File Upload Button -->
+            <div class="upload-container">
+                <h2>Upload Zip File</h2>
+                <label for="zip-file-input" class="upload-button">
+                    <i class="fas fa-file-archive"></i>
+                    <span class="upload-text">Select Zip</span>
+                </label>
+                <input type="file" id="zip-file-input" class="file-input" accept=".zip">
+                
+                <div class="preview-container" id="zip-preview-container">
+                    <div id="zip-file-name"></div>
+                </div>
+                
+                <div class="status-message" id="zip-status"></div>
+                <div class="loading-spinner" id="zip-loader"></div>
+                
+                <div class="options-container" id="zip-options">
+                    <div class="option-group" id="zip-background-option">
+                        <h3>Do you need to change the background of images?</h3>
+                        <button class="button yes" data-action="change-zip-background">Yes</button>
+                        <button class="button no" data-action="skip-zip-background">No</button>
+                        
+                        <div class="color-options" id="zip-background-options">
+                            <h3>Choose background option:</h3>
+                            <button class="button" data-background="transparent">Transparent</button>
+                            <button class="button" data-background="color">Color Palette</button>
+                            
+                            <div class="color-picker" id="zip-color-picker-container">
+                                <label for="zip-color-picker">Select Color:</label>
+                                <input type="color" id="zip-color-picker" value="#ffffff">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="option-group" id="zip-format-option">
+                        <h3>Do you need to change the format of the images?</h3>
+                        <button class="button yes" data-action="change-zip-format">Yes</button>
+                        <button class="button no" data-action="skip-zip-format">No</button>
+                        
+                        <div class="format-options" id="zip-format-options">
+                            <h3>Choose format:</h3>
+                            <select class="format-select" id="zip-format-select">
+                                <option value="png">PNG</option>
+                                <option value="jpg">JPG</option>
+                                <option value="jpeg">JPEG</option>
+                                <option value="webp">WEBP</option>
+                                <option value="gif">GIF</option>
+                                <option value="bmp">BMP</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="option-group" id="zip-compress-option">
+                        <h3>Do you need to compress the images?</h3>
+                        <button class="button yes" data-action="compress-zip-images">Yes</button>
+                        <button class="button no" data-action="skip-zip-compress">No</button>
+                    </div>
+                </div>
+                
+                <div class="processing-container" id="zip-processing-container">
+                    <h3>Processing Complete</h3>
+                    <p>Your zip file has been processed according to your specifications.</p>
+                    <a href="#" class="download-button" id="zip-download-button">Download Processed Zip</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const API_URL = 'http://localhost:5000'; // Change this to your backend URL
+            
+            // Single Image Upload
+            const singleImageInput = document.getElementById('single-image-input');
+            const singleImagePreview = document.getElementById('single-image-preview');
+            const singleImageOptions = document.getElementById('single-image-options');
+            const singleImageStatus = document.getElementById('single-image-status');
+            const singleImageLoader = document.getElementById('single-image-loader');
+            const singleProcessingContainer = document.getElementById('single-processing-container');
+            const singleDownloadButton = document.getElementById('single-download-button');
+            
+            // Zip File Upload
+            const zipFileInput = document.getElementById('zip-file-input');
+            const zipFileName = document.getElementById('zip-file-name');
+            const zipOptions = document.getElementById('zip-options');
+            const zipStatus = document.getElementById('zip-status');
+            const zipLoader = document.getElementById('zip-loader');
+            const zipProcessingContainer = document.getElementById('zip-processing-container');
+            const zipDownloadButton = document.getElementById('zip-download-button');
+            
+            // Options containers
+            const backgroundOptions = document.getElementById('background-options');
+            const formatOptions = document.getElementById('format-options');
+            const zipBackgroundOptions = document.getElementById('zip-background-options');
+            const zipFormatOptions = document.getElementById('zip-format-options');
+            
+            // Image processing options
+            let imageProcessingOptions = {
+                changeBackground: false,
+                backgroundType: null,
+                backgroundColor: '#ffffff',
+                changeFormat: false,
+                format: 'png',
+                compress: false
+            };
+            
+            let zipProcessingOptions = {
+                changeBackground: false,
+                backgroundType: null,
+                backgroundColor: '#ffffff',
+                changeFormat: false,
+                format: 'png',
+                compress: false
+            };
+            
+            // File objects
+            let currentImageFile = null;
+            let currentZipFile = null;
+            
+            // Single Image Upload Handler
+            singleImageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.type.startsWith('image/')) {
+                        currentImageFile = file;
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            singleImagePreview.src = e.target.result;
+                            singleImageStatus.textContent = 'Image loaded successfully! Please select processing options.';
+                            singleImageStatus.className = 'status-message success';
+                            singleImageStatus.style.display = 'block';
+                            singleImageOptions.style.display = 'block';
+                            singleProcessingContainer.style.display = 'none';
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        singleImageStatus.textContent = 'Please select a valid image file.';
+                        singleImageStatus.className = 'status-message error';
+                        singleImageStatus.style.display = 'block';
+                        singleImageOptions.style.display = 'none';
+                    }
+                }
+            });
+            
+            // Zip File Upload Handler
+            zipFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.type === 'application/zip' || file.name.endsWith('.zip')) {
+                        currentZipFile = file;
+                        zipFileName.textContent = `Selected file: ${file.name}`;
+                        zipStatus.textContent = 'Zip file loaded successfully! Please select processing options.';
+                        zipStatus.className = 'status-message success';
+                        zipStatus.style.display = 'block';
+                        zipOptions.style.display = 'block';
+                        zipProcessingContainer.style.display = 'none';
+                    } else {
+                        zipStatus.textContent = 'Please select a valid zip file.';
+                        zipStatus.className = 'status-message error';
+                        zipStatus.style.display = 'block';
+                        zipOptions.style.display = 'none';
+                    }
+                }
+            });
+            
+            // Single Image Options Handlers
+            document.addEventListener('click', function(e) {
+                // Background options
+                if (e.target.dataset.action === 'change-background') {
+                    imageProcessingOptions.changeBackground = true;
+                    backgroundOptions.style.display = 'block';
+                } else if (e.target.dataset.action === 'skip-background') {
+                    imageProcessingOptions.changeBackground = false;
+                    backgroundOptions.style.display = 'none';
+                    document.getElementById('format-option').style.display = 'block';
+                }
+                
+                // Background type selection
+                if (e.target.dataset.background === 'transparent') {
+                    imageProcessingOptions.backgroundType = 'transparent';
+                    document.getElementById('color-picker-container').style.display = 'none';
+                    document.getElementById('format-option').style.display = 'block';
+                } else if (e.target.dataset.background === 'color') {
+                    imageProcessingOptions.backgroundType = 'color';
+                    document.getElementById('color-picker-container').style.display = 'block';
+                    document.getElementById('format-option').style.display = 'block';
+                }
+                
+                // Format options
+                if (e.target.dataset.action === 'change-format') {
+                    imageProcessingOptions.changeFormat = true;
+                    formatOptions.style.display = 'block';
+                    document.getElementById('compress-option').style.display = 'block';
+                } else if (e.target.dataset.action === 'skip-format') {
+                    imageProcessingOptions.changeFormat = false;
+                    formatOptions.style.display = 'none';
+                    document.getElementById('compress-option').style.display = 'block';
+                }
+                
+                // Compression options
+                if (e.target.dataset.action === 'compress-image') {
+                    imageProcessingOptions.compress = true;
+                    processImage();
+                } else if (e.target.dataset.action === 'skip-compress') {
+                    imageProcessingOptions.compress = false;
+                    processImage();
+                }
+                
+                // Zip File Options
+                if (e.target.dataset.action === 'change-zip-background') {
+                    zipProcessingOptions.changeBackground = true;
+                    zipBackgroundOptions.style.display = 'block';
+                } else if (e.target.dataset.action === 'skip-zip-background') {
+                    zipProcessingOptions.changeBackground = false;
+                    zipBackgroundOptions.style.display = 'none';
+                    document.getElementById('zip-format-option').style.display = 'block';
+                }
+                
+                // Zip background type selection
+                if (e.target.dataset.background === 'transparent' && e.target.closest('#zip-background-options')) {
+                    zipProcessingOptions.backgroundType = 'transparent';
+                    document.getElementById('zip-color-picker-container').style.display = 'none';
+                    document.getElementById('zip-format-option').style.display = 'block';
+                } else if (e.target.dataset.background === 'color' && e.target.closest('#zip-background-options')) {
+                    zipProcessingOptions.backgroundType = 'color';
+                    document.getElementById('zip-color-picker-container').style.display = 'block';
+                    document.getElementById('zip-format-option').style.display = 'block';
+                }
+                
+                // Zip format options
+                if (e.target.dataset.action === 'change-zip-format') {
+                    zipProcessingOptions.changeFormat = true;
+                    zipFormatOptions.style.display = 'block';
+                    document.getElementById('zip-compress-option').style.display = 'block';
+                } else if (e.target.dataset.action === 'skip-zip-format') {
+                    zipProcessingOptions.changeFormat = false;
+                    zipFormatOptions.style.display = 'none';
+                    document.getElementById('zip-compress-option').style.display = 'block';
+                }
+                
+                // Zip compression options
+                if (e.target.dataset.action === 'compress-zip-images') {
+                    zipProcessingOptions.compress = true;
+                    processZipFile();
+                } else if (e.target.dataset.action === 'skip-zip-compress') {
+                    zipProcessingOptions.compress = false;
+                    processZipFile();
+                }
+            });
+            
+            // Color pickers
+            document.getElementById('color-picker').addEventListener('change', function(e) {
+                imageProcessingOptions.backgroundColor = e.target.value;
+            });
+            
+            document.getElementById('zip-color-picker').addEventListener('change', function(e) {
+                zipProcessingOptions.backgroundColor = e.target.value;
+            });
+            
+            // Format selectors
+            document.getElementById('format-select').addEventListener('change', function(e) {
+                imageProcessingOptions.format = e.target.value;
+            });
+            
+            document.getElementById('zip-format-select').addEventListener('change', function(e) {
+                zipProcessingOptions.format = e.target.value;
+            });
+            
+            // Process single image
+            function processImage() {
+                if (!currentImageFile) {
+                    singleImageStatus.textContent = 'No image selected.';
+                    singleImageStatus.className = 'status-message error';
+                    singleImageStatus.style.display = 'block';
+                    return;
+                }
+                
+                // Show loading spinner
+                singleImageLoader.style.display = 'block';
+                singleImageOptions.style.display = 'none';
+                singleImageStatus.style.display = 'none';
+                
+                // Create form data
+                const formData = new FormData();
+                formData.append('image', currentImageFile);
+                formData.append('changeBackground', imageProcessingOptions.changeBackground);
+                formData.append('backgroundType', imageProcessingOptions.backgroundType);
+                formData.append('backgroundColor', imageProcessingOptions.backgroundColor);
+                formData.append('changeFormat', imageProcessingOptions.changeFormat);
+                formData.append('format', imageProcessingOptions.format);
+                formData.append('compress', imageProcessingOptions.compress);
+                
+                // Send request to backend
+                fetch(`${API_URL}/process_image`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    // Create download URL
+                    const url = window.URL.createObjectURL(blob);
+                    singleDownloadButton.href = url;
+                    
+                    // Create filename
+                    const originalFilename = currentImageFile.name;
+                    const extension = imageProcessingOptions.changeFormat ? 
+                        imageProcessingOptions.format : 
+                        originalFilename.split('.').pop();
+                    
+                    singleDownloadButton.download = `processed_${originalFilename.split('.')[0]}.${extension}`;
+                    
+                    // Hide loading spinner and show download section
+                    singleImageLoader.style.display = 'none';
+                    singleProcessingContainer.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error processing image:', error);
+                    singleImageStatus.textContent = 'Error processing image. Please try again.';
+                    singleImageStatus.className = 'status-message error';
+                    singleImageStatus.style.display = 'block';
+                    singleImageLoader.style.display = 'none';
+                });
+            }
+            
+            // Process zip file
+            function processZipFile() {
+                if (!currentZipFile) {
+                    zipStatus.textContent = 'No zip file selected.';
+                    zipStatus.className = 'status-message error';
+                    zipStatus.style.display = 'block';
+                    return;
+                }
+                
+                // Show loading spinner
+                zipLoader.style.display = 'block';
+                zipOptions.style.display = 'none';
+                zipStatus.style.display = 'none';
+                
+                // Create form data
+                const formData = new FormData();
+                formData.append('zip', currentZipFile);
+                formData.append('changeBackground', zipProcessingOptions.changeBackground);
+                formData.append('backgroundType', zipProcessingOptions.backgroundType);
+                formData.append('backgroundColor', zipProcessingOptions.backgroundColor);
+                formData.append('changeFormat', zipProcessingOptions.changeFormat);
+                formData.append('format', zipProcessingOptions.format);
+                formData.append('compress', zipProcessingOptions.compress);
+                
+                // Send request to backend
+                fetch(`${API_URL}/process_zip`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    // Create download URL
+                    const url = window.URL.createObjectURL(blob);
+                    zipDownloadButton.href = url;
+                    zipDownloadButton.download = `processed_${currentZipFile.name}`;
+                    
+                    // Hide loading spinner and show download section
+                    zipLoader.style.display = 'none';
+                    zipProcessingContainer.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error processing zip file:', error);
+                    zipStatus.textContent = 'Error processing zip file. Please try again.';
+                    zipStatus.className = 'status-message error';
+                    zipStatus.style.display = 'block';
+                    zipLoader.style.display = 'none';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
